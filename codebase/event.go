@@ -41,6 +41,10 @@ type eventQueryOptions struct {
     Since time.Time `url:"since,omitempty"`
 }
 
+type ChangeMapping struct {
+    Status map[string]string
+}
+
 func (c *CodeBaseAPI) Activities(since time.Time, user User) (events []Event) {
     type eventArray struct {
         Events []Event `xml:"event"`
@@ -67,7 +71,7 @@ func (c *CodeBaseAPI) Activities(since time.Time, user User) (events []Event) {
                 continue
             }
 
-            if event.HasChanges() == false {
+            if event.HasChanges(ChangeMapping{}) == false {
                 continue
             }
 
@@ -79,8 +83,8 @@ func (c *CodeBaseAPI) Activities(since time.Time, user User) (events []Event) {
     return
 }
 
-func (e *Event) HasChanges() bool {
-    return e.Raw.Changes.Changes() != ""
+func (e *Event) HasChanges(mapping ChangeMapping) bool {
+    return e.Raw.Changes.Changes(mapping) != ""
 }
 
 func (e *Event) TicketUrl(company string) string {
@@ -92,18 +96,10 @@ func (e *Event) Day() time.Weekday {
     return date.Weekday()
 }
 
-func (e *EventChanges) Changes() string {
+func (e *EventChanges) Changes(mapping ChangeMapping) string {
     changes := ""
 
-    workType := map[string]string{
-        "Blocked -> New":               "Unblocked",
-        "Code Complete -> In Review":   "Reviewing",
-        "In Progress -> Code Complete": "Finished",
-        "In Progress -> New":           "Put back",
-        "In Review -> Code Complete":   "Reviewed",
-        "In Review -> Completed":       "Closed as completed",
-        "New -> In Progress":           "Working on",
-    }
+    workType := mapping.Status
 
     if len(e.Status) == 1 {
         changes += e.Status[0]
@@ -112,7 +108,10 @@ func (e *EventChanges) Changes() string {
         if description, ok := workType[change]; ok {
             change = description
         }
-        changes += change
+
+        if change != "" {
+            changes += change
+        }
     }
 
     return changes
