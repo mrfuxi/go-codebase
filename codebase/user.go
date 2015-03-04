@@ -21,7 +21,7 @@ type userQueryOptions struct {
 
 // Fetch User object for currently authenticated user
 func (c *CodeBaseAPI) AuthUser() (user User) {
-    for _, u := range c.users() {
+    for _, u := range c.UsersInProject() {
         if u.userNameAuth() == c.userNameAuth {
             return u
         }
@@ -33,7 +33,7 @@ func (c *CodeBaseAPI) AuthUser() (user User) {
 
 // Fetch User based on first name
 func (c *CodeBaseAPI) User(firstName string) (user User) {
-    for _, u := range c.users() {
+    for _, u := range c.UsersInProject() {
         if strings.ToLower(u.FirstName) == strings.ToLower(firstName) {
             return u
         }
@@ -43,7 +43,7 @@ func (c *CodeBaseAPI) User(firstName string) (user User) {
     return
 }
 
-func (c *CodeBaseAPI) users() []User {
+func (c *CodeBaseAPI) UsersInProject() []User {
     type userArray struct {
         Users []User `xml:"user"`
     }
