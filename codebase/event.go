@@ -6,6 +6,10 @@ import (
     "time"
 )
 
+const (
+    CHANGE_STATUS = "status"
+)
+
 type Event struct {
     Id        int    `xml:"id"`
     Title     string `xml:"title"`
@@ -41,11 +45,11 @@ type eventQueryOptions struct {
     Since time.Time `url:"since,omitempty"`
 }
 
-type ChangeMapping struct {
-    Status map[string]string
+type ChangeMapper interface {
+    MapChange(field, before, after string) (description string)
 }
 
-func (c *CodeBaseAPI) Activities(since time.Time, user User) (events []Event) {
+func (c *CodeBaseAPI) Activities(since time.Time, user User, mapper ChangeMapper) (events []Event) {
     type eventArray struct {
         Events []Event `xml:"event"`
     }
@@ -71,7 +75,7 @@ func (c *CodeBaseAPI) Activities(since time.Time, user User) (events []Event) {
                 continue
             }
 
-            if event.HasChanges(ChangeMapping{}) == false {
+            if event.HasChanges(mapper) == false {
                 continue
             }
 
@@ -83,8 +87,8 @@ func (c *CodeBaseAPI) Activities(since time.Time, user User) (events []Event) {
     return
 }
 
-func (e *Event) HasChanges(mapping ChangeMapping) bool {
-    return e.Raw.Changes.Changes(mapping) != ""
+func (e *Event) HasChanges(mapper ChangeMapper) bool {
+    return e.Raw.Changes.Changes(mapper) != ""
 }
 
 func (e *Event) TicketUrl(company string) string {
@@ -96,17 +100,16 @@ func (e *Event) Day() time.Weekday {
     return date.Weekday()
 }
 
-func (e *EventChanges) Changes(mapping ChangeMapping) string {
+func (e *EventChanges) Changes(mapper ChangeMapper) string {
     changes := ""
-
-    workType := mapping.Status
 
     if len(e.Status) == 1 {
         changes += e.Status[0]
     } else if len(e.Status) == 2 {
         change := fmt.Sprintf("%s -> %s", e.Status[0], e.Status[1])
-        if description, ok := workType[change]; ok {
-            change = description
+
+        if mapper != nil {
+            change = mapper.MapChange(CHANGE_STATUS, e.Status[0], e.Status[1])
         }
 
         if change != "" {
