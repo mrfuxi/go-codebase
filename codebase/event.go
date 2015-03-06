@@ -7,7 +7,8 @@ import (
 )
 
 const (
-    CHANGE_STATUS = "status"
+    CHANGE_STATUS    = "status"
+    CHANGE_MILESTONE = "milestone"
 )
 
 type Event struct {
@@ -33,10 +34,11 @@ type Event struct {
 }
 
 type EventChanges struct {
-    Status   []string `xml:"status-id>status-id"`
-    Assignee []string `xml:"assignee-id>assignee-id"`
-    Subject  []string `xml:"subject>subject"`
-    Priority []string `xml:"priority-id>priority-id"`
+    Status    []string `xml:"status-id>status-id"`
+    Assignee  []string `xml:"assignee-id>assignee-id"`
+    Subject   []string `xml:"subject>subject"`
+    Priority  []string `xml:"priority-id>priority-id"`
+    Milestone []string `xml:"milestone-id>milestone-id"`
 }
 
 type eventQueryOptions struct {
@@ -103,17 +105,33 @@ func (e *Event) Day() time.Weekday {
 func (e *EventChanges) Changes(mapper ChangeMapper) string {
     changes := ""
 
-    if len(e.Status) == 1 {
-        changes += e.Status[0]
-    } else if len(e.Status) == 2 {
-        change := fmt.Sprintf("%s -> %s", e.Status[0], e.Status[1])
+    type changeToMap struct {
+        field string
+        from  string
+        to    string
+    }
+
+    chagnesToMap := make([]changeToMap, 0)
+
+    if len(e.Status) == 2 {
+        change := changeToMap{CHANGE_STATUS, e.Status[0], e.Status[1]}
+        chagnesToMap = append(chagnesToMap, change)
+    }
+
+    if len(e.Milestone) == 2 {
+        change := changeToMap{CHANGE_MILESTONE, e.Milestone[0], e.Milestone[1]}
+        chagnesToMap = append(chagnesToMap, change)
+    }
+
+    for _, change := range chagnesToMap {
+        changeDescription := fmt.Sprintf("%s -> %s", change.from, change.to)
 
         if mapper != nil {
-            change = mapper.MapChange(CHANGE_STATUS, e.Status[0], e.Status[1])
+            changeDescription = mapper.MapChange(change.field, change.from, change.to)
         }
 
-        if change != "" {
-            changes += change
+        if changeDescription != "" {
+            changes += changeDescription
         }
     }
 
