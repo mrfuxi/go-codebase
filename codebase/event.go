@@ -7,8 +7,11 @@ import (
 )
 
 const (
-    CHANGE_STATUS    = "status"
-    CHANGE_MILESTONE = "milestone"
+    CHANGE_STATUS     = "status"
+    CHANGE_MILESTONE  = "milestone"
+    CHANGE_NEW_TICKET = "new ticket"
+
+    TYPE_NEW_TICKET = "ticketing_ticket"
 )
 
 type Event struct {
@@ -47,11 +50,11 @@ type eventQueryOptions struct {
     Since time.Time `url:"since,omitempty"`
 }
 
-type ChangeMapper interface {
+type Descriptor interface {
     MapChange(field, before, after string) (description string)
 }
 
-func (c *CodeBaseAPI) Activities(since time.Time, user User, mapper ChangeMapper) (events []Event) {
+func (c *CodeBaseAPI) Activities(since time.Time, user User, descriptor Descriptor) (events []Event) {
     type eventArray struct {
         Events []Event `xml:"event"`
     }
@@ -77,7 +80,7 @@ func (c *CodeBaseAPI) Activities(since time.Time, user User, mapper ChangeMapper
                 continue
             }
 
-            if event.HasChanges(mapper) == false {
+            if event.HasChanges(descriptor) == false {
                 continue
             }
 
@@ -89,8 +92,8 @@ func (c *CodeBaseAPI) Activities(since time.Time, user User, mapper ChangeMapper
     return
 }
 
-func (e *Event) HasChanges(mapper ChangeMapper) bool {
-    return e.Raw.Changes.Changes(mapper) != ""
+func (e *Event) HasChanges(descriptor Descriptor) bool {
+    return e.Changes(descriptor) != ""
 }
 
 func (e *Event) TicketUrl(company string) string {
@@ -102,32 +105,37 @@ func (e *Event) Day() time.Weekday {
     return date.Weekday()
 }
 
-func (e *EventChanges) Changes(mapper ChangeMapper) string {
+func (e *Event) Changes(descriptor Descriptor) string {
     changes := ""
 
     type changeToMap struct {
-        field string
-        from  string
-        to    string
+        changeType string
+        from       string
+        to         string
     }
 
     chagnesToMap := make([]changeToMap, 0)
 
-    if len(e.Status) == 2 {
-        change := changeToMap{CHANGE_STATUS, e.Status[0], e.Status[1]}
+    if len(e.Raw.Changes.Status) == 2 {
+        change := changeToMap{CHANGE_STATUS, e.Raw.Changes.Status[0], e.Raw.Changes.Status[1]}
         chagnesToMap = append(chagnesToMap, change)
     }
 
-    if len(e.Milestone) == 2 {
-        change := changeToMap{CHANGE_MILESTONE, e.Milestone[0], e.Milestone[1]}
+    if len(e.Raw.Changes.Milestone) == 2 {
+        change := changeToMap{CHANGE_MILESTONE, e.Raw.Changes.Milestone[0], e.Raw.Changes.Milestone[1]}
+        chagnesToMap = append(chagnesToMap, change)
+    }
+
+    if e.Type == TYPE_NEW_TICKET {
+        change := changeToMap{changeType: CHANGE_NEW_TICKET}
         chagnesToMap = append(chagnesToMap, change)
     }
 
     for _, change := range chagnesToMap {
         changeDescription := fmt.Sprintf("%s -> %s", change.from, change.to)
 
-        if mapper != nil {
-            changeDescription = mapper.MapChange(change.field, change.from, change.to)
+        if descriptor != nil {
+            changeDescription = descriptor.MapChange(change.changeType, change.from, change.to)
         }
 
         if changeDescription != "" {
