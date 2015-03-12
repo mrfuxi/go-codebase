@@ -9,6 +9,8 @@ import (
 const (
     CHANGE_STATUS     = "status"
     CHANGE_MILESTONE  = "milestone"
+    CHANGE_CATEGORY   = "category"
+    CHANGE_PRIORITY   = "priority"
     CHANGE_NEW_TICKET = "new ticket"
 
     TYPE_NEW_TICKET = "ticketing_ticket"
@@ -42,6 +44,7 @@ type EventChanges struct {
     Subject   []string `xml:"subject>subject"`
     Priority  []string `xml:"priority-id>priority-id"`
     Milestone []string `xml:"milestone-id>milestone-id"`
+    Category  []string `xml:"category-id>category-id"`
 }
 
 type eventQueryOptions struct {
@@ -123,6 +126,16 @@ func (e *Event) Changes(descriptor Descriptor) string {
 
     if len(e.Raw.Changes.Milestone) == 2 {
         change := changeToMap{CHANGE_MILESTONE, e.Raw.Changes.Milestone[0], e.Raw.Changes.Milestone[1]}
+        chagnesToMap = append(chagnesToMap, change)
+    }
+
+    if len(e.Raw.Changes.Category) == 2 {
+        change := changeToMap{CHANGE_CATEGORY, e.Raw.Changes.Category[0], e.Raw.Changes.Category[1]}
+        chagnesToMap = append(chagnesToMap, change)
+    }
+
+    if len(e.Raw.Changes.Priority) == 2 {
+        change := changeToMap{CHANGE_PRIORITY, e.Raw.Changes.Priority[0], e.Raw.Changes.Priority[1]}
         chagnesToMap = append(chagnesToMap, change)
     }
 
