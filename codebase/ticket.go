@@ -37,6 +37,10 @@ type ticketQueryOptions struct {
     Query string `url:"query,omitempty"`
 }
 
+func (t *Ticket) IsAssigned() bool {
+    return t.Assignee != ""
+}
+
 func (c *CodeBaseAPI) TicketsForMilestone(milestone Milestone) (ticket []Ticket) {
     query := fmt.Sprintf("resolution:open milestone:%s", strconv.Quote(milestone.Name))
 
