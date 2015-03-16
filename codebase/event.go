@@ -3,6 +3,7 @@ package codebase
 import (
     "fmt"
     "log"
+    "strings"
     "time"
 )
 
@@ -109,7 +110,7 @@ func (e *Event) Day() time.Weekday {
 }
 
 func (e *Event) Changes(descriptor Descriptor) string {
-    changes := ""
+    changes := make([]string, 0)
 
     type changeToMap struct {
         changeType string
@@ -152,9 +153,9 @@ func (e *Event) Changes(descriptor Descriptor) string {
         }
 
         if changeDescription != "" {
-            changes += changeDescription
+            changes = append(changes, changeDescription)
         }
     }
 
-    return changes
+    return strings.Join(changes, ", ")
 }
