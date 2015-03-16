@@ -16,6 +16,8 @@ type CodeBaseAPI struct {
     apiKey       string
     apiScheme    string
     apiHost      string
+
+    users map[string][]User
 }
 
 type baseQueryOptions struct {
@@ -33,6 +35,8 @@ func NewCodeBaseClient(username, apiKey, project string) *CodeBaseAPI {
         apiKey:       apiKey,
         Project:      project,
     }
+
+    client.users = make(map[string][]User, 0)
 
     return client
 }

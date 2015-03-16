@@ -32,6 +32,12 @@ type Ticket struct {
     Blocking       []int     `xml:"blocking>blocking"`
 }
 
+type TicketByAssignee []Ticket
+
+func (t TicketByAssignee) Len() int           { return len(t) }
+func (t TicketByAssignee) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
+func (t TicketByAssignee) Less(i, j int) bool { return t[i].Assignee < t[j].Assignee }
+
 type ticketQueryOptions struct {
     baseQueryOptions
     Query string `url:"query,omitempty"`

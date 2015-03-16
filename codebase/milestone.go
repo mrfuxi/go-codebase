@@ -23,11 +23,9 @@ type byMostRecent struct {
     ms []Milestone
 }
 
-func (m byMostRecent) Len() int      { return len(m.ms) }
-func (m byMostRecent) Swap(i, j int) { m.ms[i], m.ms[j] = m.ms[j], m.ms[i] }
-func (m byMostRecent) Less(i, j int) bool {
-    return m.ms[i].toEadges() < m.ms[j].toEadges()
-}
+func (m byMostRecent) Len() int           { return len(m.ms) }
+func (m byMostRecent) Swap(i, j int)      { m.ms[i], m.ms[j] = m.ms[j], m.ms[i] }
+func (m byMostRecent) Less(i, j int) bool { return m.ms[i].toEadges() < m.ms[j].toEadges() }
 
 func (m *Milestone) IsActive() bool {
     return m.Status == "active"

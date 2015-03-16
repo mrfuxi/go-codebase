@@ -32,27 +32,42 @@ func (c *CodeBaseAPI) AuthUser() (user User) {
 }
 
 // Fetch User based on first name
-func (c *CodeBaseAPI) User(firstName string) (user User) {
+func (c *CodeBaseAPI) User(firstName, lastname, username string) (user User) {
     for _, u := range c.UsersInProject() {
-        if strings.ToLower(u.FirstName) == strings.ToLower(firstName) {
+        if username != "" && strings.ToLower(u.UserName) == strings.ToLower(username) {
+            return u
+        }
+
+        if lastname != "" && strings.ToLower(u.LastName) == strings.ToLower(lastname) {
+            return u
+        }
+
+        if firstName != "" && strings.ToLower(u.FirstName) == strings.ToLower(firstName) {
             return u
         }
     }
 
-    log.Fatalln("Cound not find user:", firstName)
+    names := []string{firstName, lastname, username}
+
+    log.Fatalln("Cound not find user:", strings.Join(names, " "))
     return
 }
 
 func (c *CodeBaseAPI) UsersInProject() []User {
+    if cachedUsers, ok := c.users[c.Project]; ok {
+        return cachedUsers
+    }
+
     type userArray struct {
         Users []User `xml:"user"`
     }
-
     proxy := userArray{}
 
     if err := c.fetchFromCodebase("assignments", &proxy, userQueryOptions{}); err != nil {
         log.Fatalln("Could not fetch assigned users:", err)
     }
+
+    c.users[c.Project] = proxy.Users
 
     return proxy.Users
 }
