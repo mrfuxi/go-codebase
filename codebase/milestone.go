@@ -1,8 +1,11 @@
 package codebase
 
 import (
+    "errors"
+    "fmt"
     "log"
     "sort"
+    "strings"
     "time"
 )
 
@@ -36,10 +39,10 @@ func (m *Milestone) toEadges() float64 {
 
     start_date := time.Unix(0, 0)
     end_date := time.Unix(0, 0)
-    if m.StartAt == "" {
+    if m.StartAt != "" {
         start_date, _ = time.Parse(layout, m.StartAt)
     }
-    if m.Deadline == "" {
+    if m.Deadline != "" {
         end_date, _ = time.Parse(layout, m.Deadline)
     }
 
@@ -47,6 +50,45 @@ func (m *Milestone) toEadges() float64 {
     to_end := time.Since(end_date).Hours()
 
     return to_start + to_end
+}
+
+func (m *Milestone) DaysToEnd() (int, error) {
+    layout := "2006-01-02"
+
+    if m.Deadline == "" {
+        return 0, errors.New("Deadline not available")
+    }
+
+    end_date, err := time.Parse(layout, m.Deadline)
+    if err != nil {
+        return 0, err
+    }
+
+    beginningOfToday := time.Now().Truncate(24 * time.Hour)
+    hoursToEnd := end_date.Sub(beginningOfToday).Hours()
+    return int(hoursToEnd / 24), nil
+}
+
+func (m *Milestone) DaysToEndStr() string {
+    daysToEnd, err := m.DaysToEnd()
+    if err != nil {
+        return ""
+    }
+
+    if daysToEnd == 0 {
+        return "Ends today"
+    }
+
+    ending := ""
+    if daysToEnd < -1 || 1 < daysToEnd {
+        ending = "s"
+    }
+
+    if daysToEnd > 0 {
+        return fmt.Sprintf("Ends in %v day%v", daysToEnd, ending)
+    } else {
+        return fmt.Sprintf("Ended %v day%v ago", -daysToEnd, ending)
+    }
 }
 
 func (c *CodeBaseAPI) Milesones() (milestones []Milestone) {
@@ -77,4 +119,13 @@ func (c *CodeBaseAPI) CurrentMilestone() (current Milestone) {
     current = activeMilestones[0]
 
     return
+}
+
+func (m Milestone) String() string {
+    daysToEnd := m.DaysToEndStr()
+    if daysToEnd != "" {
+        return fmt.Sprintf("%v (%v)", m.Name, strings.ToLower(daysToEnd))
+    }
+
+    return m.Name
 }
