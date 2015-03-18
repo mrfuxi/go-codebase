@@ -47,15 +47,13 @@ func (t *Ticket) IsAssigned() bool {
     return t.Assignee != ""
 }
 
-func (c *CodeBaseAPI) TicketsForMilestone(milestone Milestone) (ticket []Ticket) {
+func (c *CodeBaseAPI) TicketsForMilestone(milestone Milestone) (tickets []Ticket) {
     query := fmt.Sprintf("resolution:open milestone:%s", strconv.Quote(milestone.Name))
 
     queryOpts := ticketQueryOptions{
         Query: query,
     }
     queryOpts.Page = 1
-
-    tickets := []Ticket{}
 
     for {
         proxy := ticketArray{}
@@ -71,7 +69,7 @@ func (c *CodeBaseAPI) TicketsForMilestone(milestone Milestone) (ticket []Ticket)
         queryOpts.Page++
     }
 
-    return tickets
+    return
 }
 
 func (c *CodeBaseAPI) TicketsById(id int) (ticket Ticket, err error) {
