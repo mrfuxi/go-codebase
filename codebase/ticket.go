@@ -73,3 +73,9 @@ func (c *CodeBaseAPI) TicketsForMilestone(milestone Milestone) (ticket []Ticket)
 
     return tickets
 }
+
+func (c *CodeBaseAPI) TicketsById(id int) (ticket Ticket, err error) {
+    endpoint := fmt.Sprintf("tickets/%v", id)
+    err = c.fetchFromCodebase(endpoint, &ticket, nil)
+    return
+}
