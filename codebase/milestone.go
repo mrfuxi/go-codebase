@@ -52,7 +52,7 @@ func (m *Milestone) toEadges() float64 {
     return to_start + to_end
 }
 
-func (m *Milestone) DaysToEnd() (int, error) {
+func (m *Milestone) DaysToEnd() (int64, error) {
     layout := "2006-01-02"
 
     if m.Deadline == "" {
@@ -64,9 +64,8 @@ func (m *Milestone) DaysToEnd() (int, error) {
         return 0, err
     }
 
-    beginningOfToday := time.Now().Truncate(24 * time.Hour)
-    hoursToEnd := end_date.Sub(beginningOfToday).Hours()
-    return int(hoursToEnd / 24), nil
+    days := workingDays(end_date).SinceUnix() - workingDays(time.Now()).SinceUnix()
+    return days, nil
 }
 
 func (m *Milestone) DaysToEndStr() string {
