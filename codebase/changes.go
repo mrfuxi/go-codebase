@@ -6,11 +6,12 @@ import (
 )
 
 const (
-    CHANGE_STATUS     = "status"
-    CHANGE_MILESTONE  = "milestone"
+    CHANGE_ASSIGNEE   = "assignee"
     CHANGE_CATEGORY   = "category"
-    CHANGE_PRIORITY   = "priority"
+    CHANGE_MILESTONE  = "milestone"
     CHANGE_NEW_TICKET = "new ticket"
+    CHANGE_PRIORITY   = "priority"
+    CHANGE_STATUS     = "status"
 )
 
 type EventChanges struct {
@@ -48,6 +49,11 @@ func (e *EventChanges) mappedChanges() []changeToMap {
 
     if len(e.Priority) == 2 {
         change := changeToMap{CHANGE_PRIORITY, e.Priority[0], e.Priority[1]}
+        chagnesToMap = append(chagnesToMap, change)
+    }
+
+    if len(e.Assignee) == 2 {
+        change := changeToMap{CHANGE_ASSIGNEE, e.Assignee[0], e.Assignee[1]}
         chagnesToMap = append(chagnesToMap, change)
     }
 
