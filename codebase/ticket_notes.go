@@ -1,6 +1,7 @@
 package codebase
 
 import (
+    "encoding/json"
     "fmt"
     "log"
     "time"
@@ -22,6 +23,19 @@ type TicketNote struct {
 
 func (t *TicketNote) ChangesState() bool {
     return t.UpdatesRaw != "{}"
+}
+
+func (t *TicketNote) Updates() (updates EventChanges) {
+    if err := json.Unmarshal([]byte(t.UpdatesRaw), &updates); err != nil {
+        log.Fatalln(err)
+    }
+    return
+}
+
+func (t *TicketNote) Changes(descriptor Descriptor) string {
+    updates := t.Updates()
+    chagnesToMap := updates.mappedChanges()
+    return describeChanges(chagnesToMap, descriptor)
 }
 
 func (c *CodeBaseAPI) NotesForTicket(id int) []TicketNote {

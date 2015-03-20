@@ -3,17 +3,10 @@ package codebase
 import (
     "fmt"
     "log"
-    "strings"
     "time"
 )
 
 const (
-    CHANGE_STATUS     = "status"
-    CHANGE_MILESTONE  = "milestone"
-    CHANGE_CATEGORY   = "category"
-    CHANGE_PRIORITY   = "priority"
-    CHANGE_NEW_TICKET = "new ticket"
-
     TYPE_NEW_TICKET = "ticketing_ticket"
 )
 
@@ -37,15 +30,6 @@ type Event struct {
         Changes          EventChanges `xml:"changes"`
         ProjectPermalink string       `xml:"project-permalink"`
     }   `xml:"raw-properties"`
-}
-
-type EventChanges struct {
-    Status    []string `xml:"status-id>status-id"`
-    Assignee  []string `xml:"assignee-id>assignee-id"`
-    Subject   []string `xml:"subject>subject"`
-    Priority  []string `xml:"priority-id>priority-id"`
-    Milestone []string `xml:"milestone-id>milestone-id"`
-    Category  []string `xml:"category-id>category-id"`
 }
 
 type eventQueryOptions struct {
@@ -110,52 +94,12 @@ func (e *Event) Day() time.Weekday {
 }
 
 func (e *Event) Changes(descriptor Descriptor) string {
-    changes := make([]string, 0)
-
-    type changeToMap struct {
-        changeType string
-        from       string
-        to         string
-    }
-
-    chagnesToMap := make([]changeToMap, 0)
-
-    if len(e.Raw.Changes.Status) == 2 {
-        change := changeToMap{CHANGE_STATUS, e.Raw.Changes.Status[0], e.Raw.Changes.Status[1]}
-        chagnesToMap = append(chagnesToMap, change)
-    }
-
-    if len(e.Raw.Changes.Milestone) == 2 {
-        change := changeToMap{CHANGE_MILESTONE, e.Raw.Changes.Milestone[0], e.Raw.Changes.Milestone[1]}
-        chagnesToMap = append(chagnesToMap, change)
-    }
-
-    if len(e.Raw.Changes.Category) == 2 {
-        change := changeToMap{CHANGE_CATEGORY, e.Raw.Changes.Category[0], e.Raw.Changes.Category[1]}
-        chagnesToMap = append(chagnesToMap, change)
-    }
-
-    if len(e.Raw.Changes.Priority) == 2 {
-        change := changeToMap{CHANGE_PRIORITY, e.Raw.Changes.Priority[0], e.Raw.Changes.Priority[1]}
-        chagnesToMap = append(chagnesToMap, change)
-    }
+    chagnesToMap := e.Raw.Changes.mappedChanges()
 
     if e.Type == TYPE_NEW_TICKET {
         change := changeToMap{changeType: CHANGE_NEW_TICKET}
         chagnesToMap = append(chagnesToMap, change)
     }
 
-    for _, change := range chagnesToMap {
-        changeDescription := fmt.Sprintf("%s -> %s", change.from, change.to)
-
-        if descriptor != nil {
-            changeDescription = descriptor.MapChange(change.changeType, change.from, change.to)
-        }
-
-        if changeDescription != "" {
-            changes = append(changes, changeDescription)
-        }
-    }
-
-    return strings.Join(changes, ", ")
+    return describeChanges(chagnesToMap, descriptor)
 }
