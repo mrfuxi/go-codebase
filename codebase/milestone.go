@@ -14,12 +14,13 @@ type milestoneArray struct {
 }
 
 type Milestone struct {
-    Id          int    `xml:"id"`
-    Name        string `xml:"name"`
-    StartAt     string `xml:"start-at"`
-    Deadline    string `xml:"deadline"`
-    Status      string `xml:"status"`
-    Description string `xml:"description"`
+    Id            int    `xml:"id"`
+    Name          string `xml:"name"`
+    StartAt       string `xml:"start-at"`
+    Deadline      string `xml:"deadline"`
+    Status        string `xml:"status"`
+    Description   string `xml:"description"`
+    EstimatedTime int    `xml:"estimated-time"`
 }
 
 type byMostRecent struct {
@@ -127,4 +128,12 @@ func (m Milestone) String() string {
     }
 
     return m.Name
+}
+
+func (m *Milestone) EstimatedTimeDuration() time.Duration {
+    if m.EstimatedTime <= 0 {
+        return 0
+    }
+
+    return time.Duration(m.EstimatedTime) * time.Minute
 }
