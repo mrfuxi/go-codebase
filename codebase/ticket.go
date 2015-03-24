@@ -12,15 +12,15 @@ type ticketArray struct {
 }
 
 type Ticket struct {
-    Id         int    `xml:"ticket-id"`
-    Summary    string `xml:"summary"`
-    TicketType string `xml:"ticket-type"`
-    Assignee   string `xml:"assignee"`
-    Status     string `xml:"status>name"`
-    Priority   string `xml:"priority>name"`
-    Estimation string `xml:"estimated-time"`
-    Reporter   string `xml:"reporter"`
-    Category   string `xml:"category>name"`
+    Id            int    `xml:"ticket-id"`
+    Summary       string `xml:"summary"`
+    TicketType    string `xml:"ticket-type"`
+    Assignee      string `xml:"assignee"`
+    Status        string `xml:"status>name"`
+    Priority      string `xml:"priority>name"`
+    EstimationRaw string `xml:"estimated-time"`
+    Reporter      string `xml:"reporter"`
+    Category      string `xml:"category>name"`
 
     Milestone      Milestone `xml:"milestone"`
     StartOn        string    `xml:"start-on"`
@@ -45,6 +45,18 @@ type ticketQueryOptions struct {
 
 func (t *Ticket) IsAssigned() bool {
     return t.Assignee != ""
+}
+
+func (t *Ticket) Estimation() int64 {
+    if t.EstimationRaw == "" {
+        return 0
+    }
+
+    val, err := strconv.ParseInt(t.EstimationRaw, 10, 0)
+    if err != nil {
+        log.Fatalln(err)
+    }
+    return val
 }
 
 func (c *CodeBaseAPI) TicketsForMilestone(milestone Milestone) (tickets []Ticket) {
