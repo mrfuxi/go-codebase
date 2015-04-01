@@ -5,13 +5,13 @@ import (
     "time"
 )
 
-type workingDays time.Time
+type WorkingDays time.Time
 
-func (w workingDays) time() time.Time {
+func (w WorkingDays) time() time.Time {
     return time.Time(w)
 }
 
-func (w workingDays) SinceUnix() int64 {
+func (w WorkingDays) SinceUnix() int64 {
     beginningOfDay := w.time().UTC().Truncate(24 * time.Hour)
 
     days := beginningOfDay.UnixNano() / int64(24*time.Hour)

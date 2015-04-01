@@ -9,6 +9,10 @@ import (
     "time"
 )
 
+const (
+    timeLayout = "2006-01-02"
+)
+
 type milestoneArray struct {
     Milestones []Milestone `xml:"ticketing-milestone"`
 }
@@ -20,7 +24,7 @@ type Milestone struct {
     Deadline      string `xml:"deadline"`
     Status        string `xml:"status"`
     Description   string `xml:"description"`
-    EstimatedTime int    `xml:"estimated-time"`
+    EstimatedTime int64  `xml:"estimated-time"`
 }
 
 type byMostRecent struct {
@@ -35,16 +39,32 @@ func (m *Milestone) IsActive() bool {
     return m.Status == "active"
 }
 
-func (m *Milestone) toEadges() float64 {
-    layout := "2006-01-02"
+func (m *Milestone) StartAtTime() (t time.Time, err error) {
+    if m.StartAt != "" {
+        t, err = time.Parse(timeLayout, m.StartAt)
+    } else {
+        err = errors.New("Start time not available")
+    }
+    return
+}
 
+func (m *Milestone) DeadlineTime() (t time.Time, err error) {
+    if m.Deadline != "" {
+        t, err = time.Parse(timeLayout, m.Deadline)
+    } else {
+        err = errors.New("Deadline not available")
+    }
+    return
+}
+
+func (m *Milestone) toEadges() float64 {
     start_date := time.Unix(0, 0)
     end_date := time.Unix(0, 0)
     if m.StartAt != "" {
-        start_date, _ = time.Parse(layout, m.StartAt)
+        start_date, _ = time.Parse(timeLayout, m.StartAt)
     }
     if m.Deadline != "" {
-        end_date, _ = time.Parse(layout, m.Deadline)
+        end_date, _ = time.Parse(timeLayout, m.Deadline)
     }
 
     to_start := time.Since(start_date).Hours()
@@ -54,18 +74,12 @@ func (m *Milestone) toEadges() float64 {
 }
 
 func (m *Milestone) DaysToEnd() (int64, error) {
-    layout := "2006-01-02"
-
-    if m.Deadline == "" {
-        return 0, errors.New("Deadline not available")
-    }
-
-    end_date, err := time.Parse(layout, m.Deadline)
+    end_date, err := m.DeadlineTime()
     if err != nil {
         return 0, err
     }
 
-    days := workingDays(end_date).SinceUnix() - workingDays(time.Now()).SinceUnix()
+    days := WorkingDays(end_date).SinceUnix() - WorkingDays(time.Now()).SinceUnix()
     return days, nil
 }
 
