@@ -105,6 +105,22 @@ func (m *Milestone) DaysToEndStr() string {
     }
 }
 
+func (m *Milestone) WorkingDaysInSprint() (int64, error) {
+    start, err := m.StartAtTime()
+    if err != nil {
+        return 0, err
+    }
+
+    end, err := m.DeadlineTime()
+    if err != nil {
+        return 0, err
+    }
+
+    days := WorkingDays(end).SinceUnix() - WorkingDays(start).SinceUnix()
+
+    return days, nil
+}
+
 func (c *CodeBaseAPI) Milesones() (milestones []Milestone) {
     queryOpts := baseQueryOptions{}
 
